@@ -159,13 +159,8 @@ class anno(object):
         temp="fs"
         pchange,vairiantType="",""
         cdnaseq+=downUTR
-        print(fixedleftCDNA,cdnaseq)
         refCDNA=cdnaseq[fixedleftCDNA-1:]
-        #print(refCDNA,fixedleftCDNA)
-        print(seq2aaref,seq2aaalt,refCDNA)
         altCDNA=re.sub("^"+seq2aaref,seq2aaalt,refCDNA)
-        print(refCDNA,altCDNA)
-        #print(seq2aaref,seq2aaalt)
         i=0
         while i < min(int(len(refCDNA)/3)*3,int(len(altCDNA)/3)*3):
             temprefaa=self.getaas(refCDNA[i:i+3])
@@ -176,7 +171,6 @@ class anno(object):
         leftproteinNo+=i/3
         refCDNA=refCDNA[i:]
         altCDNA=altCDNA[i:]
-        print(i,refCDNA,altCDNA)
         reffirstaa=self.getaas(refCDNA[0:3])
         altfirstaa=self.getaas(altCDNA[0:3])
         if altfirstaa =="Ter":
@@ -189,7 +183,6 @@ class anno(object):
         return pchange,vairiantType
     ###移动蛋白质
     def moveAA(self,aasref,upprotein,downprotein,leftproteinNo,rightproteinNo):
-        #print(leftproteinNo,rightproteinNo,aasref,downprotein)
         length=min(len(aasref),len(downprotein))
         i=0
         while i <length:
@@ -227,18 +220,14 @@ class anno(object):
         newaasref=aasref[i:]+downprotein[:i]
         upprotein+=aasref[:i]
         downprotein=downprotein[i:]
-        #print(leftproteinNo,rightproteinNo)
         return newaasref,leftproteinNo,rightproteinNo,upprotein,downprotein
 
     ###parse upprotein for nonframeshift protein
     def parseupdownaa(self,upprotein,downprotein,leftproteinNo,rightproteinNo,leftexcnum,rightexcnum,rawaasref,aasref,aasalt):
-        #print(leftexcnum,rightexcnum)
         upprotein+=rawaasref[0:leftexcnum]
         downprotein=rawaasref[-rightexcnum:]+downprotein if rightexcnum!=0 else downprotein
-        #print(upprotein,downprotein)
         leftproteinNo+=leftexcnum/3
         rightproteinNo-=rightexcnum/3
-        #print(aasref,aasalt,leftproteinNo,rightproteinNo)
         if leftproteinNo==rightproteinNo:
             if len(aasalt)==3 and len(aasref)==3:
                 temp=""
@@ -272,17 +261,12 @@ class anno(object):
 #            pchange="p."+upprotein[-3:]+str(leftproteinNo)+"_"+downprotein[0:3]+temp+aasalt
             ###氨基酸后移
 #            newdownprotein=rawaasref[-rightexcnum:]+downprotein
-            #print(downprotein)
-            #print(aasref)
             aasref,leftproteinNo,rightproteinNo,upprotein,downprotein=self.moveAA(aasref,upprotein,downprotein,leftproteinNo,rightproteinNo)
             pchange="p."+aasref[0:3]+str(leftproteinNo)+"_"+aasref[-3:]+str(rightproteinNo)+temp+aasalt
         return pchange
 
-        
-
     ##parse c.,if variant locate in coding region,need to judge dup and get c.dup，lef5bp=left2bp+leftlength+lef
     def getcpincoding(self,leftCDNA,rightCDNA,ref,alt,left5bp,right5bp,nearbySize,cdnaseq,seq,downUTR): ###此处左右指上下游，-链left5bp和right5bp要做反向互补处理
-        #print(leftCDNA,rightCDNA,seq)
         cchange=""
         pchange=""
         vairiantType=""
@@ -303,41 +287,27 @@ class anno(object):
         rightproteinNo=self.striveRemainder(rightCDNA)#int(math.ceil(float(rightCDNA)/3))
         leftcomType=complement[leftresidual]
         rightcomType=complement[rightresidual]
-        #print(leftCDNA,rightCDNA,ref,alt)
         leftbases,rightbases,upprotein,downprotein="","","",""
+        ###leftbases and rightbases are used to get neatby bases
         if leftcomType[0]!="right":
             leftbases+=left5bp[-leftcomType[1]:]
-        #    leftbases=cdnaseq[leftCDNA-leftcomType[1]-1:leftCDNA-1]
             fixedleftCDNA-=leftcomType[1]
             upstart-=leftcomType[1]
             t=int((len(left5bp)-leftcomType[1])/3)*3
-#            upprotein=self.getaas(left5bp[-leftcomType[1]-t:-leftcomType[1]])
             upprotein=self.getaas(cdnaseq[0:leftCDNA-1-leftcomType[1]])
-            print(fixedleftCDNA,leftCDNA,rightCDNA,upprotein)
         else:
-#            t=int(len(left5bp)/3)*3
-#            upprotein=self.getaas(left5bp[-t:])
             upprotein=self.getaas(cdnaseq[0:leftCDNA-1])
-            print(leftCDNA,rightCDNA,upprotein)
         if rightcomType[0]!="left":
             rightbases+=right5bp[0:rightcomType[1]]
-         #   rightbases=cdnaseq[rightCDNA:rightCDNA+rightcomType[1]]
-        #    fixedrightCDNA+=rightcomType[1]
             t=int((len(cdnaseq)-rightCDNA-rightcomType[1])/3)*3
-#            downprotein=self.getaas(right5bp[rightcomType[1]:rightcomType[1]+t])
             downprotein=self.getaas(cdnaseq[rightCDNA+rightcomType[1]:rightCDNA+rightcomType[1]+t])
-            print(leftCDNA,rightCDNA,downprotein)
         else:
             t=int((len(cdnaseq)-rightCDNA)/3)*3
-#            downprotein=self.getaas(right5bp[0:t])
             downprotein=self.getaas(cdnaseq[rightCDNA:rightCDNA+t])
-            print(leftCDNA,rightCDNA,downprotein)
         seq2aaref=leftbases+ref+rightbases
         seq2aaalt=leftbases+alt+rightbases
-        print(seq2aaref,seq2aaalt)
         if ref=="-": ###insertion
             temp="ins"
-            #print(seq)
             left5bp+=seq[0]
             right5bp=seq[1]+right5bp
             leftbases+=seq[0]
@@ -354,16 +324,13 @@ class anno(object):
             ##p.需要增加上游序列判断dup:nonframe shift
             seq2aaref=leftbases+rightbases
             seq2aaalt=leftbases+alt+rightbases
-            #print(seq2aaref,seq2aaalt,leftproteinNo,rightproteinNo)
             aasref=self.getaas(seq2aaref) 
             if len(seq2aaalt)%3==0:#non frameshift
                 temp="ins"
                 rawaasref=aasref
                 proteinNo=leftproteinNo    
                 aasalt=self.getaas(seq2aaalt)
-                #print(aasref,aasalt)
                 aasref,aasalt,leftexcnum,rightexcnum=self.compareAA(aasref,aasalt)
-                #print(aasref,aasalt,leftexcnum,rightexcnum)
                 pchange=self.parseupdownaa(upprotein,downprotein,leftproteinNo,rightproteinNo,leftexcnum,rightexcnum,rawaasref,aasref,aasalt)
                 vairiantType="nonframeshift"
             else: ##frameshift
@@ -386,15 +353,11 @@ class anno(object):
                         cchange="c."+str(leftCDNA)+"_"+str(rightCDNA)+temp+ref if len(ref)>1 else "c."+str(leftCDNA)+temp+ref
                 middle=alt
             seq2aaalt=leftbases+middle+rightbases
-            #print(seq2aaalt)
             aasref=self.getaas(seq2aaref)
-            #print(seq2aaref,seq2aaalt)
             if len(seq2aaalt)%3==0:###nonframeshit,remaining bases%3=0
                 aasalt=self.getaas(seq2aaalt) 
                 rawaasref=aasref
-                #print(aasref,aasalt)
                 aasref,aasalt,leftexcnum,rightexcnum=self.compareAA(aasref,aasalt)
-                #print(leftproteinNo,rightproteinNo,leftexcnum,rightexcnum,aasref,aasalt,downprotein)
                 pchange=self.parseupdownaa(upprotein,downprotein,leftproteinNo,rightproteinNo,leftexcnum,rightexcnum,rawaasref,aasref,aasalt)
                 vairiantType="nonframe shift"
             else: ###frameshift, del non integral aas
@@ -428,7 +391,7 @@ class anno(object):
             vairiantType="splice_donor_variant"
         elif (lr[0][1]<=2 and updown[lr[0][0]]=="-") or (lr[1][1]<=2 and updown[lr[1][0]]=="-"):
                 vairiantType="splice_acceptor_variant"
-        if ref=="-": ##insersion,
+        if ref=="-": ##insertion,
             temp="ins"
             dup=left5bp[-len(alt):]
             cchange="c."+str(corr[lr[0][0]])+updown[lr[0][0]]+str(lr[0][1])+"_"+str(corr[lr[1][0]])+updown[lr[1][0]]+str(lr[1][1])+temp+alt
@@ -442,11 +405,101 @@ class anno(object):
             temp=">" 
             cchange="c."+str(corr[lr[0][0]])+str(updown[lr[0][0]])+str(lr[0][1])+ref+temp+alt
         return cchange,pchange,vairiantType
+    ###get intron length
+    def getintronlength(self,exonstart,exonend,strand,label):
+        length=[]
+        if (strand=="+" and label=="5' UTR") or (strand=="-" and label=="3' UTR"):
+            end,lengthtmp=0,0
+            for i in list(range(len(exonstart)))[::-1]:
+                if i==len(exonstart)-1:
+                    length.append(0)
+                    lengthtmp+=0
+                    end=int(exonstart[i])
+                else:
+                    ###intron in UTR
+                    leftborder=int(exonend[i])+1
+                    rightborder=end
+                    lengthtmp+=(rightborder-leftborder+1)
+                    length.append(lengthtmp)
+                    end=int(exonstart[i])
+            return length[::-1]
+        elif (strand=="+" and label=="3' UTR") or (strand=="-" and label=="5' UTR"):
+            start,lengthtmp=0,0
+            for i in range(len(exonstart)):
+                if i==0:
+                    lengthtmp+=0
+                    length.append(lengthtmp)
+                    start=int(exonend[i])+1
+                else:
+                    leftborder=start
+                    rightborder=exonstart[i]
+                    lengthtmp+=(rightborder-leftborder+1)
+                    length.append(lengthtmp)
+                    start=int(exonend[i])+1
+            return length
 
-    ##get distance for UTR
+    ##parse CDNA change in UTR
+    def parsecchangeUTR(self,s,strand,position):
+        leftborder,rightborder,length,label,exonstart,exonend=position
+        temp,left,right,vairiantType="","","",""
+        if label=="5' UTR":
+            temp="-"
+            vairiantType="5_prime_UTR_variant"
+        elif label=="3' UTR":
+            temp="*"
+            vairiantType="3_prime_UTR_variant"
+        else:
+            os._exit("cann't recognise label:"+label)
+        if strand=="+":
+            left="+"
+            right="-"
+        else:
+            right="+"
+            left="-"
+        if len(exonstart)!=len(exonend):
+            os._exit("please check UTR start positions and UTR end positions!")
+        intronlength=self.getintronlength(exonstart,exonend,strand,label)
+        start,end=float('inf'),float('inf')
+        for i in range(len(exonstart)):
+            if i==0:
+                if exonstart[i]==exonend[i]:
+                    continue
+                leftborder=int(exonstart[i])+1
+                rightborder=int(exonend[i])
+                start=rightborder+1
+                status=self.getCDNA(leftborder,s,rightborder,s)
+                if status:
+                    return temp+str(abs(s-length+intronlength[i])),vairiantType
+            else:
+                if exonstart[i]==exonend[i]:
+                    end=float('inf')
+                else:
+                    end=exonstart[i]
+                ###intron in UTR
+                leftborder=start
+                rightborder=end
+                status=self.getCDNA(leftborder,s,rightborder,s)
+                if status:
+                    leftdis=abs(s-leftborder)+1
+                    rightdis=abs(s-rightborder)+1
+                    if leftdis<=rightdis:
+                        return temp+str(abs(leftborder-1-length+intronlength[i-1]))+left+str(leftdis),vairiantType
+                    else:
+                        return temp+str(abs(rightborder+1-length+intronlength[i]))+right+str(rightdis),vairiantType
+                if exonstart[i]==exonend[i]:
+                    continue
+                ###exon in UTR
+                leftborder=int(exonstart[i])+1
+                rightborder=int(exonend[i])
+                status=self.getCDNA(leftborder,s,rightborder,s)
+                if status:
+                    return temp+str(abs(s-length+intronlength[i])),vairiantType
+                start=rightborder+1
+
+    ##get distance for UTR,no use
     def getDis(self,s,e,strand,position):
         leftborder,rightborder,length,label=position
-        UTRlength=abs(leftborder-rightborder)+1 
+        UTRlength=abs(leftborder-rightborder)+1
         if strand=="+":
             if label=="5' UTR":
                 leftdis=str(s-rightborder-1)
@@ -485,7 +538,12 @@ class anno(object):
     ##get cp in UTR
     def getcpinUTR(self,s,e,ref,alt,strand,position):
         cchange,pchange="",""
-        leftdis,rightdis,vairiantType=self.getDis(s,e,strand,position)
+        if strand=="+":
+            leftdis,vairiantType=self.parsecchangeUTR(s,strand,position)
+            rightdis,vairiantType=self.parsecchangeUTR(e,strand,position)
+        else:
+            rightdis,vairiantType=self.parsecchangeUTR(s,strand,position)
+            leftdis,vairiantType=self.parsecchangeUTR(e,strand,position)
         if ref=="-":
             temp="ins"
             cchange="c."+str(leftdis)+"_"+str(rightdis)+temp+alt
@@ -502,8 +560,7 @@ class anno(object):
 
     ##get leftCDNA and rightCDNA so on
     def getexonInfo(self,s,e,strand,position):
-        leftborder,rightborder,length,label=position 
-        #print(leftborder,rightborder,length,label)
+        leftborder,rightborder,length,label=position
         vairiantType=""
         stemp,etemp=s,e
         upborder,downborder=leftborder,rightborder
@@ -578,9 +635,10 @@ class anno(object):
         if alt!="-":
             temp="delins"+alt
         symbol=""
-        cchange,pchange,vairiantType="","",""
-        leftborder1,rightborder1,length1,label1=positions[0]
-        leftborder2,rightborder2,length2,label2=positions[1]
+        cchange,pchange,variantType="","",""
+        if len(positions[0])==4:
+            leftborder1,rightborder1,length1,label1=positions[0]
+            leftborder2,rightborder2,length2,label2=positions[1]
         label=label1+"-"+label2
         updis,downdis=0,0
         if strand=="+":
@@ -610,16 +668,20 @@ class anno(object):
                 symbol="+"
             elif ("5' UTR" in label1 or "upstream" in label1) and "exon" in label2:
                 CDNA=e-length2
-                ctemp=CDNA-downdis
-                stemp="-"
-                dis=updis+1
-                cchange="c."+str(ctemp)+stemp+str(dis)+"_"+str(CDNA)+temp
+                #ctemp=CDNA-downdis
+                #stemp="-"
+                #dis=updis+1
+                leftdis,variantType=self.parsecchangeUTR(s,strand,positions[0])
+                #cchange="c."+str(ctemp)+stemp+str(dis)+"_"+str(CDNA)+temp
+                cchange="c."+str(leftdis)+"_"+str(CDNA)+temp
             elif ("3' UTR" in label2 or "downstream" in label2) and "exon" in label1:
                 CDNA=s-length1
-                ctemp=CDNA+updis
-                stemp="+"
-                dis=downdis+1
-                cchange="c."+str(CDNA)+"_"+str(ctemp)+stemp+str(dis)+temp
+                #ctemp=CDNA+updis
+                #stemp="+"
+                #dis=downdis+1
+                #cchange="c."+str(CDNA)+"_"+str(ctemp)+stemp+str(dis)+temp
+                rightdis,variantType=self.parsecchangeUTR(e,strand,positions[1])
+                cchange="c."+str(CDNA)+"_"+str(rightdis)+temp
             else:
                 pass
         else:
@@ -649,25 +711,29 @@ class anno(object):
                 symbol="+"
             elif ("5' UTR" in label1 or "upstream" in label1) and "exon" in label2:
                 CDNA=length2-s
-                ctemp=CDNA-downdis
-                stemp="-"
-                dis=updis+1
-                cchange="c."+str(ctemp)+stemp+str(dis)+"_"+str(CDNA)+temp
+                #ctemp=CDNA-downdis
+                #stemp="-"
+                #dis=updis+1
+                #cchange="c."+str(ctemp)+stemp+str(dis)+"_"+str(CDNA)+temp
+                leftdis,variantType=self.parsecchangeUTR(e,strand,positions[0])
+                cchange="c."+str(leftdis)+"_"+str(CDNA)+temp
             elif ("3' UTR" in label2 or "downstream" in label2) and "exon" in label1:
                 CDNA=length1-e
-                ctemp=CDNA+updis
-                stemp="+"
-                dis=downdis+1
-                cchange="c."+str(CDNA)+"_"+str(ctemp)+stemp+str(dis)+temp
+                #ctemp=CDNA+updis
+                #stemp="+"
+                #dis=downdis+1
+                #cchange="c."+str(CDNA)+"_"+str(ctemp)+stemp+str(dis)+temp
+                rightdis,variantType=self.parsecchangeUTR(s,strand,positions[1])
+                cchange="c."+str(CDNA)+"_"+str(rightdis)+temp
             else:
                 pass
         if updis<=2 or downdis<=2 and symbol=="+":
-            vairiantType="splice_donor_variant"
+            variantType="splice_donor_variant"
         elif updis<=2 or downdis<=2 and symbol=="-":
-            vairiantType="splice_acceptor_variant"
+            variantType="splice_acceptor_variant"
         else:
-            vairiantType="splice_region_variant"
-        return cchange,pchange,vairiantType,label
+            variantType="splice_region_variant"
+        return cchange,pchange,variantType,label
 
     ###parse cp for each region
     def getCDNAchange(self,positions,strand,s,e,ref,alt,left5bp,right5bp,nearbySize,cdnaseq,seq,downUTR,splicingSize=2):
@@ -677,19 +743,17 @@ class anno(object):
             print("variant is in intergenic!")
             return "","","",""
         elif len(positions)==1:
-            label=positions[0][-1] 
-            leftCDNA,rightCDNA,rawvairiantType= self.getexonInfo(s,e,strand,positions[0])
-            print(s,e,leftCDNA,rightCDNA,ref,alt)
-            #print(leftCDNA,rightCDNA)
-            if "exon" in label:      
+            label=positions[0][-1] if len(positions[0])==4 else positions[0][-3]
+            if re.search("UTR",label):
+                cchange,pchange,vairiantType=self.getcpinUTR(s,e,ref,alt,strand,positions[0])
+            elif "exon" in label: 
+                leftCDNA,rightCDNA,rawvairiantType= self.getexonInfo(s,e,strand,positions[0])     
                 cchange,pchange,vairiantType=self.getcpincoding(leftCDNA,rightCDNA,ref,alt,left5bp,right5bp,nearbySize,cdnaseq,seq,downUTR)
                 if rawvairiantType!="":
                     vairiantType=rawvairiantType
             elif "intron" in label:
                 leftCDNA,rightCDNA,lr=self.getintronInfo(s,e,strand,positions[0]) 
                 cchange,pchange,vairiantType=self.getcpinintron(leftCDNA,rightCDNA,s,e,ref,alt,lr,left5bp,right5bp)
-            elif re.search("UTR",label):
-                cchange,pchange,vairiantType=self.getcpinUTR(s,e,ref,alt,strand,positions[0])
             elif re.search("upstream",label) or re.search("downstream",label):
                 cchange,pchange,vairiantType="","",label
             else:
@@ -705,7 +769,6 @@ class anno(object):
         return "".join(revcompleSeq)
     ###locate CDSstart and CDSend
     def locateCDS(self,CDSstart,CDSend,exonstart,exonend):
-        #print(exonstart)
         i,j=0,len(exonstart)-1
         while i < len(exonstart):
             status,ori=self.judgeIntersect(CDSstart,exonstart[i],CDSend,exonend[i])
@@ -717,8 +780,117 @@ class anno(object):
             if status:
                 break
             j-=1
-        return exonstart[i:j+1],exonend[i:j+1],i,len(exonstart)-1-j
+        leftUTRexonstart=exonstart[:i+1]##0-based
+        leftUTRexonend=exonend[:i]+[CDSstart-1]###1-based
+        rightUTRexonstart=[CDSend+1-1]+exonstart[j+1:]###0-based
+        rightUTRexonend=exonend[j:]###1-based
+        return exonstart[i:j+1],exonend[i:j+1],i,len(exonstart)-1-j,leftUTRexonstart,leftUTRexonend,rightUTRexonstart,rightUTRexonend
                 
+    ####deal with UTR region,no use, this is 5'UTR flanking region
+    def processRegion(self,UTRexonstart,UTRexonend,transstart,label):
+        if label=="left":
+            UTRexonstart[0]=transstart
+        elif label=="right":
+            UTRexonend[-1]=transstart
+        return UTRexonstart,UTRexonend
+
+    ###process exons and introns
+    def processEIforwardStrand(self,exonstart,exonend,strand,label,c,s,e,fasta,faiInfo,positions):
+        if len(exonstart)!=len(exonend):
+            os._exit("please check UTR region")
+        downUTR=""
+        if (strand=="+" and label=="5' UTR") or (strand=="-" and label=="3' UTR"):
+            end=0
+            length=0
+            for i in list(range(len(exonstart)))[::-1]:
+                leftborder=exonstart[i]+1
+                rightborder=exonend[i]
+                if rightborder<leftborder:
+                    end=rightborder
+                    i-=1
+                    length=leftborder+1
+                    continue
+                if i==len(exonstart)-1:
+                    length=rightborder+1
+                    end=leftborder-1
+                    status=self.getCDNA(leftborder,s,rightborder,e)
+                    if status:
+                        positions.append([leftborder,rightborder,length,label])
+                    if label=="3' UTR":
+                        downUTR+=self.transRevAndComple(getSeq(fasta,c,leftborder,rightborder,faiInfo)[0])
+                else:
+                    ###intron in UTR
+                    leftborder=exonend[i]+1
+                    rightborder=end
+                    status=self.getCDNA(leftborder,s,rightborder,e)
+                    if status:
+                        positions.append([leftborder,rightborder,length,label+"-intron"])
+                    length-=(rightborder-leftborder+1)
+                    ###exon in UTR
+                    leftborder=exonstart[i]+1
+                    rightborder=exonend[i]
+                    status=self.getCDNA(leftborder,s,rightborder,e)
+                    if status:
+                        positions.append([leftborder,rightborder,length,label])
+                    if label=="3' UTR":
+                        downUTR+=self.transRevAndComple(getSeq(fasta,c,leftborder,rightborder,faiInfo)[0])
+                    end=leftborder-1
+        elif (strand=="+" and label=="3' UTR") or (strand=="-" and label=="5' UTR"):
+            start=0
+            length=0
+            for i in range(len(exonstart)):
+                leftborder=exonstart[i]+1
+                rightborder=exonend[i]
+                if rightborder<leftborder:
+                    start=leftborder
+                    length=rightborder
+                    i+=1
+                    continue
+                if i==0:
+                    start=rightborder+1
+                    status=self.getCDNA(leftborder,s,rightborder,e)
+                    if status:
+                        positions.append([leftborder,rightborder,length,label])
+                    if label=="3' UTR":
+                        downUTR+=getSeq(fasta,c,leftborder,rightborder,faiInfo)[0]
+                else:
+                    leftborder=start
+                    rightborder=exonstart[i]
+                    status=self.getCDNA(leftborder,s,rightborder,e)
+                    if status:
+                        positions.append([leftborder,rightborder,length,label+"-intron"])
+                    length+=(rightborder-leftborder+1)
+                    leftborder=exonstart[i]
+                    rightborder=exonend[i]
+                    status=self.getCDNA(leftborder,s,rightborder,e)
+                    if status:
+                        positions.append([leftborder,rightborder,length,label])
+                    if label=="3' UTR":
+                        downUTR+=getSeq(fasta,c,leftborder,rightborder,faiInfo)[0]
+                    start=rightborder+1
+        if label=="3'UTR":
+            return positions,downUTR
+        else:
+            return positions
+
+    ###get downstream UTR sequence
+    def getUTRseq(self,exonstart,exonend,strand,fasta,c,faiInfo):
+        downUTR=""
+        if strand=="-":
+            for i in list(range(len(exonstart)))[::-1]:
+                leftborder=exonstart[i]+1
+                rightborder=exonend[i]
+                if rightborder<leftborder:
+                    continue
+                downUTR+=self.transRevAndComple(getSeq(fasta,c,leftborder,rightborder,faiInfo)[0])
+        elif strand=="+":
+            for i in range(len(exonstart)):
+                leftborder=exonstart[i]+1
+                rightborder=exonend[i]
+                if rightborder<leftborder:
+                    continue
+                downUTR+=getSeq(fasta,c,leftborder,rightborder,faiInfo)[0]
+        return downUTR
 
     ###split and define function region
     def defineFunction(self,lineinfo,fasta,strand,c,s,e,ref,alt,upstream,downstream,splicingSize):####0-based in refeq file 
@@ -731,7 +903,7 @@ class anno(object):
         exonstart=map(lambda x:int(x),re.split(",",lineinfo[9])[:-1])
         exonend=map(lambda x: int(x),re.split(",",lineinfo[10])[:-1]) 
         rawtotalExons=int(lineinfo[8])
-        exonstart,exonend,leftexons,rightexons=self.locateCDS(cdsstart,cdsend,exonstart,exonend)
+        exonstart,exonend,leftexons,rightexons,leftUTRexonstart,leftUTRexonend,rightUTRexonstart,rightUTRexonend=self.locateCDS(cdsstart,cdsend,exonstart,exonend)
         totalExons=len(exonstart)
         if cdsstart==cdsend or re.match("NR",lineinfo[1]):
             print("no coding transcript")
@@ -742,25 +914,27 @@ class anno(object):
         length=0 ###length for calculating CDNA change
         cdnaseq=""
         downUTR=""
-       # print(s,e,ref,alt)
         s,e,ref,alt,seq,left5bp,right5bp,nearbySize,faiInfo=getSequence.getVariantInfo(c,s,e,fasta,ref,alt,strand)
-       # print(s,e,ref,alt)
+        ###deal with UTR regions,add UTR flanking region into UTR region,which isn't useful
+        #leftUTRexonstart,leftUTRexonend=self.dealRegion(leftUTRexonstart,leftUTRexonend,transstart,"left")
+        #rightUTRexonstart,rightUTRexonend=self.dealRegion(rightUTRexonstart,rightUTRexonend,transend,"right") 
         if strand=="+":
             if transtart!=cdsstart: 
                 status=self.getCDNA(transtart,s,cdsstart-1,e)
                 leftborder=transtart
                 rightborder=cdsstart-1
-                length=0
+                length=cdsstart
                 if status:
-                    positions.append([leftborder,rightborder,length,"5' UTR"])
+                    positions.append([leftborder,rightborder,length,"5' UTR",leftUTRexonstart,leftUTRexonend])
             if tranend!=cdsend:
                 status=self.getCDNA(cdsend+1,s,tranend,e)
                 leftborder=cdsend+1
                 rightborder=tranend
-                length=0
-                downUTR=getSeq(fasta,c,cdsend+1,tranend,faiInfo)[0]
+                length=cdsend
+                #downUTR=getSeq(fasta,c,cdsend+1,tranend,faiInfo)[0]
+                downUTR=self.getUTRseq(rightUTRexonstart,rightUTRexonend,strand,fasta,c,faiInfo)
                 if status:
-                    positions.append([leftborder,rightborder,length,"3' UTR"])
+                    positions.append([leftborder,rightborder,length,"3' UTR",rightUTRexonstart,rightUTRexonend])
             status=self.getCDNA(transtart-2000,s,transtart-1,e)
             leftborder=transtart-2000
             rightborder=transtart-1
@@ -780,7 +954,7 @@ class anno(object):
                         rightborder=cdsend
                     start=exonend[i]+1
                     status=self.getCDNA(leftborder,s,rightborder,e)
-                    length+=cdsstart-1
+                    length=cdsstart-1
                     if status:
                         positions.append([leftborder,rightborder,length,'exon'+str(i+1+leftexons)])
                     cdnaseq+=getSeq(fasta,c,cdsstart,exonend[i],faiInfo)[0]
@@ -794,8 +968,7 @@ class anno(object):
                     if i<totalExons-1:
                         status=self.getCDNA(exonstart[i]+1,s,exonend[i],e)
                         leftborder=exonstart[i]+1
-                        rightborder=exonend[i]
-                        #print(status,leftborder,rightborder,'exon'+str(i+1),s,e)
+                        rightborder=exonend[i] 
                         if status:
                             positions.append([leftborder,rightborder,length,'exon'+str(i+1+leftexons)])
                         cdnaseq+=getSeq(fasta,c,exonstart[i]+1,exonend[i],faiInfo)[0]
@@ -807,7 +980,6 @@ class anno(object):
                        if status:
                            positions.append([leftborder,rightborder,length,'exon'+str(i+1+leftexons)])
                     start=exonend[i]+1
-#                i+=1
         else:
             ref=self.transRevAndComple(ref)
             alt=self.transRevAndComple(alt)
@@ -822,17 +994,18 @@ class anno(object):
                 status=self.getCDNA(transtart,s,cdsstart-1,e)
                 leftborder=transtart
                 rightborder=cdsstart-1
-                length=0
-                downUTR=self.transRevAndComple(getSeq(fasta,c,transtart,cdsstart-1,faiInfo)[0])
+                length=cdsstart
+                #downUTR=self.transRevAndComple(getSeq(fasta,c,transtart,cdsstart-1,faiInfo)[0])
+                downUTR=self.getUTRseq(leftUTRexonstart,leftUTRexonend,strand,fasta,c,faiInfo)
                 if status:
-                    positions.append([leftborder,rightborder,length,"3' UTR"])
+                    positions.append([leftborder,rightborder,length,"3' UTR",leftUTRexonstart,leftUTRexonend])
             if tranend!=cdsend:
                 status=self.getCDNA(cdsend+1,s,tranend,e)
                 leftborder=cdsend+1
                 rightborder=tranend
-                length=0
+                length=cdsend
                 if status:
-                    positions.append([leftborder,rightborder,length,"5' UTR"])
+                    positions.append([leftborder,rightborder,length,"5' UTR",rightUTRexonstart,rightUTRexonend])
             status=self.getCDNA(tranend+1,s,tranend+2000,e)
             leftborder=tranend+1
             rightborder=tranend+2000
@@ -854,8 +1027,7 @@ class anno(object):
                     end=exonstart[i]
                     seqt=getSeq(fasta,c,leftborder,rightborder,faiInfo)[0] 
                     cdnaseq+=self.transRevAndComple(seqt)
-                    length=cdsend+1 ###leftCDNA=length-e 
-                    #print(leftborder,rightborder,length,"exon"+str(totalExons-i))
+                    length=cdsend+1 ###leftCDNA=length-e
                     if status:
                         positions.append([leftborder,rightborder,length,"exon"+str(totalExons-i+rightexons)])
                 else:
@@ -881,8 +1053,7 @@ class anno(object):
                         rightborder=exonend[i]
                         if status:
                             positions.append([leftborder,rightborder,length,"exon"+str(totalExons-i+rightexons)])
-                    end=exonstart[i] 
-        #print(positions)
+                    end=exonstart[i]
         cchange,pchange,vairiantType,label=self.getCDNAchange(positions,strand,s,e,ref,alt,left5bp,right5bp,nearbySize,cdnaseq,seq,downUTR,splicingSize)
         return cchange,pchange,vairiantType,label,rawtotalExons
 
@@ -899,7 +1070,6 @@ class anno(object):
         lines=info.split("\n")
         indexList=[]
         index=0
-        #print(self.chrom,0,len(lines),self.start,self.end,index)
         index=binarySearch(lines,self.chrom,0,len(lines),self.start,self.end,index)
         if index=="none":
             print("no transcript or locate in intergenetic!")
@@ -922,7 +1092,3 @@ class anno(object):
             annoList.append(hgvs)
             vairiantTypeList.append(vairiantType)
         return annoList,vairiantTypeList
-
-        ###find upstream and downstream of gene
-        #updownIndexList=[]
-        #binarySearch(lines,0,len(lines),self.start,self.end,updownIndexList,)

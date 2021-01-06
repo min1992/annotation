@@ -16,7 +16,6 @@ def getEnd(pos,ref,alt):
     variantType=""
     if ref=="-":###对于输入的插入，在位置之前插入;
         start=pos-1
-#        end=pos+1##为了和
         end=pos
     elif alt=="-":
         start=pos

@@ -27,7 +27,7 @@ def mergeOri(oriList):
     if leftori==rightori:
         return leftori
     else:
-       return False
+        return False
 
 
 def binarySearch(lines,chrom,startpos,endpos,start,end,index,upstream=2000,downstream=500): 
@@ -55,7 +55,7 @@ def binarySearch(lines,chrom,startpos,endpos,start,end,index,upstream=2000,downs
             continue
         midline=lines[i]
         midlineinfo=midline.split("\t")
-        print(midlineinfo)
+        #print(midlineinfo)
         stemp=int(midlineinfo[4])-upstream
         etemp=int(midlineinfo[5])+downstream
         lastlineinfo=lines[i-1].split("\t")
