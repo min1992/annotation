@@ -53,13 +53,13 @@ class anno(object):
 
     ###judge if two sections are intersectant
     def judgeIntersect(self,start1,start2,end1,end2):
-        maxStart=max(int(start1),int(start2))
-        minEnd=min(int(end1),int(end2)) 
+        maxStart=max(start1,start2)
+        minEnd=min(end1,end2) 
         if maxStart<=minEnd:
             return True,"middle"
-        elif int(start2) > int(start1):
+        elif start2 > start1:
             return False,"right"
-        elif int(start2) < int(start1):
+        elif start2 < start1:
             return False,"left"
 
     ###find neadby multiple transcript accornding one index
@@ -440,7 +440,7 @@ class anno(object):
 
     ##parse CDNA change in UTR
     def parsecchangeUTR(self,s,strand,position):
-        leftborder,rightborder,length,label,exonstart,exonend=position
+        leftborder,rightborder,length,label,exonstart,exonend=position 
         temp,left,right,vairiantType="","","",""
         if label=="5' UTR":
             temp="-"
@@ -458,11 +458,12 @@ class anno(object):
             left="-"
         if len(exonstart)!=len(exonend):
             os._exit("please check UTR start positions and UTR end positions!")
-        intronlength=self.getintronlength(exonstart,exonend,strand,label)
+        intronlength=self.getintronlength(exonstart,exonend,strand,label) 
         start,end=float('inf'),float('inf')
         for i in range(len(exonstart)):
             if i==0:
                 if exonstart[i]==exonend[i]:
+                    start=int(exonend[i])+1
                     continue
                 leftborder=int(exonstart[i])+1
                 rightborder=int(exonend[i])
@@ -538,7 +539,7 @@ class anno(object):
     ##get cp in UTR
     def getcpinUTR(self,s,e,ref,alt,strand,position):
         cchange,pchange="",""
-        if strand=="+":
+        if strand=="+": 
             leftdis,vairiantType=self.parsecchangeUTR(s,strand,position)
             rightdis,vairiantType=self.parsecchangeUTR(e,strand,position)
         else:
@@ -589,7 +590,7 @@ class anno(object):
         elif lr[1][0]=="both":
             lr[1][0]=lr[0][0]
         elif lr[0][0]=="both":
-            lr[1][0]=lr[0][0]
+            lr[0][0]=lr[1][0]
         else:
             pass
         return lr
@@ -639,7 +640,11 @@ class anno(object):
         if len(positions[0])==4:
             leftborder1,rightborder1,length1,label1=positions[0]
             leftborder2,rightborder2,length2,label2=positions[1]
-        label=label1+"-"+label2
+            label=label1+"-"+label2
+        else:
+            leftborder1,rightborder1,length1,label1=positions[0][:4]
+            leftborder2,rightborder2,length2,label2=positions[1][:4]
+            label=label1+"-"+label2
         updis,downdis=0,0
         if strand=="+":
             updis=abs(s-rightborder1)
@@ -904,8 +909,8 @@ class anno(object):
         exonend=map(lambda x: int(x),re.split(",",lineinfo[10])[:-1]) 
         rawtotalExons=int(lineinfo[8])
         exonstart,exonend,leftexons,rightexons,leftUTRexonstart,leftUTRexonend,rightUTRexonstart,rightUTRexonend=self.locateCDS(cdsstart,cdsend,exonstart,exonend)
-        totalExons=len(exonstart)
-        if cdsstart==cdsend or re.match("NR",lineinfo[1]):
+        totalExons=len(exonstart) 
+        if cdsstart==cdsend or re.match("^NR",lineinfo[1]):
             print("no coding transcript")
             return "","","","",""
         positions=[]
@@ -1057,6 +1062,22 @@ class anno(object):
         cchange,pchange,vairiantType,label=self.getCDNAchange(positions,strand,s,e,ref,alt,left5bp,right5bp,nearbySize,cdnaseq,seq,downUTR,splicingSize)
         return cchange,pchange,vairiantType,label,rawtotalExons
 
+    ###get index in refseq file
+    def getIndex(self,lines,start,end):
+        indexs=[]
+        i=0
+        for line in lines:
+            line=line.strip("\n")
+            if re.match("^$",line) or line=="":
+                continue
+            lineinfo=line.split("\t")
+            start1=int(lineinfo[4])
+            end1=int(lineinfo[5])
+            status,dir=self.judgeIntersect(start1,int(start),end1,int(end))
+            if status:
+                indexs.append(i)
+            i+=1
+        return indexs
 
     def main(self):
         chromInfo=self.geneIndex(self.refseq)
@@ -1066,18 +1087,24 @@ class anno(object):
         startByte=chromInfo[self.chrom]['start']
         endByte=chromInfo[self.chrom]['end']
         info=self.readIn(self.refseq,startByte,endByte) 
+        ####################################
         ###binary search for transcript index
-        lines=info.split("\n")
-        indexList=[]
-        index=0
-        index=binarySearch(lines,self.chrom,0,len(lines),self.start,self.end,index)
-        if index=="none":
-            print("no transcript or locate in intergenetic!")
-            return [],[]
-        indexList.append(index)
+#        lines=info.split("\n")
+#        indexList=[]
+#        index=0
+#        index=binarySearch(lines,self.chrom,0,len(lines),self.start,self.end,index)
+#        if index=="none":
+#            print("no transcript or locate in intergenetic!")
+#            return [],[]
+#        indexList.append(index)
         ###find nearby multiple transcripts
-        indexList=self.findnearby(lines,index,self.start,self.end,indexList,"left")
-        indexList=self.findnearby(lines,index,self.start,self.end,indexList,"right")	
+#        indexList=self.findnearby(lines,index,self.start,self.end,indexList,"left")
+#        indexList=self.findnearby(lines,index,self.start,self.end,indexList,"right")
+#        print(info)
+        lines=info.split("\n")
+        indexList=self.getIndex(lines,self.start,self.end)
+        ####################################
+        ####################################
         ###annotation
         annoList=[]
         strandList=[]
@@ -1088,6 +1115,8 @@ class anno(object):
             EnsemnleNo=lineinfo[-1]
             strand=lineinfo[3]
             cchange,pchange,vairiantType,label,totalExons=self.defineFunction(lineinfo,self.fasta,strand,self.chrom,self.start,self.end,self.ref,self.alt,self.upstream,self.downstream,self.splicingSize)
+            if cchange=="" and pchange=="" and vairiantType=="" and label=="" and totalExons=="":
+                continue
             hgvs=NCBINo+":"+EnsemnleNo+":"+strand+":"+label+"|"+str(totalExons)+":"+cchange+":"+pchange
             annoList.append(hgvs)
             vairiantTypeList.append(vairiantType)
